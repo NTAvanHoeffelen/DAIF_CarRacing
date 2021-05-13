@@ -117,14 +117,14 @@ class Agent():
         
         # Load settings
         self.load_network = False
-        self.network_load_path = "networks/dq_cnn_CarRacing_policynet.pth"
+        self.network_load_path = 'networks/dq_cnn_CarRacing_policynet.pth'
         
         # Create networks
         self.policy_net = DQN(n_screens = self.n_screens, n_hidden = self.n_hidden, n_outputs=self.n_actions, lr=self.lr, device=self.device)
         self.target_net = DQN(n_screens = self.n_screens, n_hidden = self.n_hidden, n_outputs=self.n_actions, lr=self.lr, device=self.device)
            
         if self.load_network: # If true: load policy network given a path
-            self.policy_net.load_state_dict(torch.load(self.network_load_path))
+            self.policy_net.load_state_dict(torch.load(self.network_load_path, map_location = self.device))
             self.policy_net.eval()
             self.eps = self.eps_min # If we load a model, epsilon is set to its minimum
         
@@ -229,6 +229,44 @@ class Agent():
         self.policy_net.optimizer.zero_grad() # Reset the gradient
         loss.backward() # Compute the gradient
         self.policy_net.optimizer.step() # Perform gradient descent
+       
+        
+    ''' For viewing a trained model without learning. '''
+    def play(self):
+        for ith_episode in range(self.n_episodes):
+            
+            total_reward = 0
+            nr_steps = 0
+            obs = self.env.reset()
+            obs = self.convert_observation(obs)
+            obs_batch = self.get_obs_batch(obs)
+            done = False
+            
+            while not done and nr_steps <= self.max_length_episode:
+                
+                # get action
+                action = self.select_action(obs_batch)
+                
+                # get actual action from discrete actions dictionary
+                action_todo = self.discrete_actions.get(int(action[0]))
+                
+                # take step
+                obs, reward, done, _ = self.env.step([action_todo[0], action_todo[1], action_todo[2]])
+                nr_steps = nr_steps + 1
+                obs = self.convert_observation(obs)
+                obs_batch = self.get_obs_batch(obs)
+                
+                # render in visible window if True
+                if self.render_view:
+                    self.env.render('human')
+                
+                # add reward to total
+                total_reward += reward
+
+            print("Reward for this episode:", total_reward)
+            total_reward = 0         
+
+        self.env.close()
         
         
     def train(self):
@@ -256,7 +294,7 @@ class Agent():
                 # get action
                 action = self.select_action(obs_batch)
                 
-                #push to memory
+                # push to memory
                 self.memory.push(obs, action, reward, done)
                 
                 # get actual action from discrete actions dictionary
@@ -333,4 +371,4 @@ class Agent():
 
 if __name__ == "__main__":
     agent = Agent()
-    agent.train()
+    agent.play()
