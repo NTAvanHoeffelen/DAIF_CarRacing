@@ -1,0 +1,7 @@
+
+
+-----------------------------------------------------------------
+File opened at 2021-07-15 13:58:37.121423
+Environment is: CarRacing-v0
+Training started at 2021-07-15 13:58:37.121423
+Episodes:   10, avg score: -30.64, over last 10: -29.91

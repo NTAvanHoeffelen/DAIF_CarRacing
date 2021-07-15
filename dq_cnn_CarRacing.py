@@ -13,8 +13,8 @@ class DQN(nn.Module):
     def __init__(self, n_screens, n_hidden, n_outputs, lr=0.001, device='cpu'):
         super(DQN, self).__init__()
         
-        self.n_screens = n_screens
-        self.n_hidden = n_hidden
+        self.n_screens = n_screens # Number of stacked observations
+        self.n_hidden = n_hidden   # Number of hidden units
         self.n_outputs = n_outputs # Number of outputs
 
         self.device = device
@@ -23,32 +23,31 @@ class DQN(nn.Module):
         self.encoder = nn.Sequential(                
                 nn.Conv2d(self.n_screens, 64, 4, stride=2), # (1, n_screens, 42, 42) --> (1, 64, 20, 20)
                 nn.BatchNorm2d(64),
-                nn.MaxPool2d(2, stride = 2), #(1, 64, 20, 20) --> (1, 64, 10, 10)
+                nn.MaxPool2d(2, stride = 2),                # (1, 64, 20, 20) --> (1, 64, 10, 10)
                 nn.ReLU(inplace=False),
                 
-                nn.Conv2d(64, 128, 4, stride=2), # (1, 64, 10, 10) --> (1, 128, 4, 4)
+                nn.Conv2d(64, 128, 4, stride=2),            # (1, 64, 10, 10) --> (1, 128, 4, 4)
                 nn.BatchNorm2d(128),
-                nn.MaxPool2d(2, stride = 2), # (1, 128, 4, 4) --> (1, 128, 2, 2)
+                nn.MaxPool2d(2, stride = 2),                # (1, 128, 4, 4) --> (1, 128, 2, 2)
                 nn.ReLU(inplace=False),
                 
-                nn.Conv2d(128, 256, 2, stride=2), # (1, 128, 2, 2) --> (1, 256, 1, 1)
+                nn.Conv2d(128, 256, 2, stride=2),           # (1, 128, 2, 2) --> (1, 256, 1, 1)
                 nn.ReLU(inplace=False),
                 
                 ).to(self.device)
         
         # The size of the encoder output
         self.encoder_output_shape = (256, 1, 1) 
-        self.encoder_output_size = np.prod(self.encoder_output_shape) # 2048
+        self.encoder_output_size = np.prod(self.encoder_output_shape)
         
         self.fc1 = nn.Linear(self.encoder_output_size, self.n_hidden) # Hidden layer
-        self.fc2 = nn.Linear(self.n_hidden, self.n_outputs) # Output layer
+        self.fc2 = nn.Linear(self.n_hidden, self.n_outputs)           # Output layer
         
-        self.optimizer = optim.Adam(self.parameters(), lr)  # Adam optimizer
+        self.optimizer = optim.Adam(self.parameters(), lr)            # Adam optimizer
         
         self.to(self.device)
 
     def forward(self, x):
-        
         # cast to device
         x = x.to(self.device)
         
@@ -66,18 +65,18 @@ class Agent():
     def __init__(self, device = 'cuda'):
         
         self.device = device
-        self.env = cr.CarRacing()    # The environment
+        self.env = cr.CarRacing()
         self.render_view = False     # Set to True if you want to see what it is doing
         self.print_timer = 10        # Print average result of Agent every '...' episodes
         
         # Size of observation
-        self.height = self.width = 42
-        self.color = 1
-        self.n_screens = 8
+        self.height = self.width = 42 # observation size (height and width)
+        self.color = 1                # number of colors
+        self.n_screens = 8            # number of observations stacked
         
         self.obs_shape = (self.height, self.width)
-        self.obs_size = int(np.prod(self.obs_shape))
-        self.linear = False
+        self.obs_size = int(np.prod(self.obs_shape)) # The size of the observation
+        self.linear = False                          # True if the input is a vector
         
         # Discretization of continuous action space for CarRacing-v0
         # [0] = steering, [1] = accelerating, [2] = braking
@@ -97,7 +96,7 @@ class Agent():
         self.n_actions = len(self.discrete_actions) 
         
         
-        # Determines how much the agent explores, decreases over time depending on eps_min and eps_decay
+        # Determines how much the agent explores, decreases linearly over time depending eps_decay to the value of eps_min
         self.eps_max = 0.15
         self.eps_min = 0.05
         self.eps = self.eps_max 
@@ -111,13 +110,14 @@ class Agent():
         self.n_hidden = 512            # number of hidden units in the model
         self.lr = 1e-5                 # learning rate
         self.gamma = 0.99              # Discount rate
-        self.memory_capacity = 300000  # memory size in items
+        self.memory_capacity = 300000  # memory size
         self.n_episodes = 1000         # number of episodes
+        self.n_play_episodes = 150     # number of episodes used for average reward test
         self.max_length_episode = 1000 # max number of steps a episode of the CarRacing environment lasts
         
         # Load settings
         self.load_network = False
-        self.network_load_path = 'networks/dq_cnn_CarRacing_policynet.pth'
+        self.network_load_path = 'networks/dqn/dq_cnn_CarRacing_policynet_r{}.pth'.format(self.run_id)
         
         # Create networks
         self.policy_net = DQN(n_screens = self.n_screens, n_hidden = self.n_hidden, n_outputs=self.n_actions, lr=self.lr, device=self.device)
@@ -127,6 +127,7 @@ class Agent():
             self.policy_net.load_state_dict(torch.load(self.network_load_path, map_location = self.device))
             self.policy_net.eval()
             self.eps = self.eps_min # If we load a model, epsilon is set to its minimum
+            print("Succesfully loaded the network")
         
         # Make the target network a copy of the policy network
         self.target_net.load_state_dict(self.policy_net.state_dict())
@@ -153,13 +154,11 @@ class Agent():
         # Training settings
         self.run_id = 1
         self.save_results = True
-        self.results_save_timer = 200
         self.save_network = True
-        self.network_save_timer = 200
-        self.results_path = "results/dq_cnn_CarRacing_results_r{}.npz".format(self.run_id)
-        self.network_save_path = "networks/dq_cnn_CarRacing_policynet_r{}.pth".format(self.run_id)
+        self.results_path = "results/dqn/dq_cnn_CarRacing_results_r{}.npz".format(self.run_id)
+        self.network_save_path = "networks/dqn/dq_cnn_CarRacing_policynet_r{}.pth".format(self.run_id)
         
-        self.log_path = "logs/dq_cnn_log_r{}.txt".format(self.run_id)
+        self.log_path = "logs/dq_cnn_CarRacing_log_r{}.txt".format(self.run_id)
         self.record = open(self.log_path, "a")
         self.record.write("\n\n-----------------------------------------------------------------\n")
         self.record.write("File opened at {}\n".format(datetime.datetime.now()))
@@ -182,7 +181,7 @@ class Agent():
         obs = obs.transpose((2, 1, 0))
         
         # stips of bottom part of the image which contains a black bar with the accumulated reward and control value bars, and makes sure width is equal to height
-        obs = obs[:, 6:90, int(96*0):int(96 * 0.875)]   # width: 84; height: 84
+        obs = obs[:, 6:90, int(96*0):int(96 * 0.875)]
         
         # grayscale and resize
         obs = self.preprocess(torch.from_numpy(np.flip(obs, axis=0).copy()))      
@@ -231,9 +230,12 @@ class Agent():
         self.policy_net.optimizer.step() # Perform gradient descent
        
         
-    ''' For viewing a trained model without learning. '''
+    ''' Run a trained model without it learning. '''
     def play(self):
-        for ith_episode in range(self.n_episodes):
+        
+        rewards = []
+        
+        for ith_episode in range(self.n_play_episodes):
             
             total_reward = 0
             nr_steps = 0
@@ -263,10 +265,13 @@ class Agent():
                 # add reward to total
                 total_reward += reward
 
+            rewards.append(total_reward)
             print("Reward for this episode:", total_reward)
             total_reward = 0         
 
         self.env.close()
+        
+        np.savez("rewards/dqn_cnn_CarRacing_rewards", np.array(rewards))
         
         
     def train(self):
@@ -343,23 +348,14 @@ class Agent():
                 # save log
                 self.record.close()
                 self.record = open(self.log_path, "a")
-            
-            # If enabled, save the results and the network (state_dict)
-            if self.save_results and ith_episode > 0 and ith_episode % self.results_save_timer == 0:
-                np.savez("results/intermediary/intermediary_results_r{}_{:d}".format(self.run_id, ith_episode), np.array(results))
-            if self.save_network and ith_episode > 0 and ith_episode % self.network_save_timer == 0:
-                torch.save(self.policy_net.state_dict(), "networks/intermediary/intermediary_networks_r{}_{:d}.pth".format(self.run_id, ith_episode))
-
-
+                
         # close environment after training
         self.env.close()
         
         # If enabled, save the results and the network (state_dict)
         if self.save_results:
-            np.savez("results/intermediary/intermediary_results_r{}_end".format(self.run_id), np.array(results))
             np.savez(self.results_path, np.array(results))
         if self.save_network:
-            torch.save(self.policy_net.state_dict(), "networks/intermediary/intermediary_networks_r{}_end.pth".format(self.run_id))
             torch.save(self.policy_net.state_dict(), self.network_save_path)
         
         # Print and keep a (.txt) record of stuff
@@ -371,4 +367,4 @@ class Agent():
 
 if __name__ == "__main__":
     agent = Agent()
-    agent.play()
+    agent.train()
