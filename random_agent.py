@@ -72,7 +72,6 @@ class Agent():
                 self.record.close()
                 self.record = open(self.log_path, "a")
         
-        #ipythondisplay.clear_output(wait=True)
         self.env.close()
         
         # If enabled, save the results and the network (state_dict)
