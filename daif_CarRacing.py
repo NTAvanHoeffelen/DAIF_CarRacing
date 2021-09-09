@@ -225,7 +225,7 @@ class Agent():
         self.load_pre_trained_vae = True
         self.pt_vae_load_path = "networks/pre_trained_vae/vae_daif_CarRacing_{}_end.pth".format(self.n_latent_states)
         
-        self.load_network = False
+        self.load_network = True
         self.network_load_path = "networks/daif/daif_CarRacing_{}net_r{}.pth".format("{}", self.run_id)
         
         # Initialize the networks:
