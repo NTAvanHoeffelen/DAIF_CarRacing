@@ -102,14 +102,6 @@ def plot_moving_avg():
             mean_data.append(mean_temp)
         return mean_data
     
-    def mean2(data):
-        mean_data = []
-        mean_data.append(data['arr_0'][0])
-        for i in range(1,len(data['arr_0'])):
-            mean_data.append(( data['arr_0'][i] * 0.1 ) + ( mean_data[i-1] * 0.9 ))
-            
-        return mean_data
-    
     dqn_mean_data = mean(dqn_data)
     dqn_mean = np.mean(dqn_mean_data, axis = 0)
     dqn_std = np.std(dqn_mean_data, axis = 0)
