@@ -1,6 +1,8 @@
 # Deep Active Inference for Pixel-Based Discrete Control: Evaluation on the Car Racing Problem
 This is the github repository containing the code and the results published in: van Hoeffelen NTA., Lanillos P. Deep Active Inference for Pixel-Based Discrete Control: Evaluation on the Car Racing Problem.
 
+[Preprint](https://arxiv.org/pdf/2109.04155.pdf)
+
 ### Use
 This repository contains the impletation of an:
 - Active inference agent (daif_CarRacing.py) designed to run on Open AI's CarRacing-v0
