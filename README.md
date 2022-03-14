@@ -1,7 +1,7 @@
 # Deep Active Inference for Pixel-Based Discrete Control: Evaluation on the Car Racing Problem
 This is the github repository containing the code and the results published in: van Hoeffelen NTA., Lanillos P. Deep Active Inference for Pixel-Based Discrete Control: Evaluation on the Car Racing Problem.
 
-[Preprint](https://arxiv.org/pdf/2109.04155.pdf)
+[Preprint](https://arxiv.org/pdf/2109.04155.pdf) <br>
 [Published](https://link.springer.com/chapter/10.1007/978-3-030-93736-2_60)
 
 ### Use
