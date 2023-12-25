@@ -141,7 +141,7 @@ class Agent():
         # When sampling from memory at index i, obs_indices indicates that we want observations with indices i-obs_indices, works the same for the others
         self.obs_indices = [(self.n_screens+1)-i for i in range(self.n_screens+2)]
         self.action_indices = [1]
-        self.reward_indices = [1]
+        self.reward_indices = [1] # should most likely be [0] instead of [1]
         self.done_indices = [0]
         self.max_n_indices = max(max(self.obs_indices, self.action_indices, self.reward_indices, self.done_indices)) + 1
         
